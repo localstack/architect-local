@@ -10,8 +10,6 @@
     "organization": true
   },
   "license": "Apache-2.0",
-  "dependencies": {
-  },
   "repository": {
     "url": "https://github.com/localstack/architect-local.git",
     "type": "git"

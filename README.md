@@ -1,6 +1,6 @@
 # Architect Local
 
-This repo provides `arclocal`, a simple command-line wrapper to use Architect CLI (arc.codes) locally with [LocalStack](https://localstack.cloud).
+This repo provides `arclocal`, a simple command-line wrapper to use Architect CLI (https://arc.codes) locally with [LocalStack](https://localstack.cloud).
 
 ## Prerequisites
 
@@ -24,6 +24,28 @@ The `arclocal` CLI has the same usage as the `arc` command. For example, to init
 arclocal init
 arclocal deploy
 ```
+
+... should print something like:
+```
+App ⌁ sample
+Region ⌁ us-west-2
+Profile ⌁ default
+Version ⌁ Architect 9.0.0
+
+⚬ Deploy Creating new private deployment bucket: sample-cfn-deployments-e4e7d
+⚬ Deploy Initializing deployment
+| Stack ... SampleStaging
+| Bucket .. sample-cfn-deployments-e4e7d
+✓ Hydrate Finished checks, nothing to hydrate
+⚬ Deploy Created deployment templates
+✓ Deploy Generated CloudFormation deployment
+✓ Deploy Deployed & built infrastructure
+✓ Success! Deployed app in 37.008 seconds
+
+http://95da73ea.execute-api.localhost.localstack.cloud:4566
+```
+
+You can then access http://95da73ea.execute-api.localhost.localstack.cloud:4566 in your browser to see the Architect demo landing page, deployed in your LocalStack instance.
 
 (Please note that LocalStack needs to be running and listening on the default port 4566 for the above commands to succeed.)
 
