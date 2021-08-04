@@ -1,7 +1,7 @@
 {
   "name": "architect-local",
   "description": "Architect CLI for use with LocalStack",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "bin": {
     "arclocal": "bin/arclocal"
   },

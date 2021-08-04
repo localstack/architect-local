@@ -1,23 +1,56 @@
 #!/usr/bin/env node
 
-const spawn = require('@architect/architect/node_modules/@architect/deploy/src/sam/utils/spawn');
+// TODO make configurable
+const LOCALSTACK_HOSTNAME = 'localhost.localstack.cloud'
+const EDGE_PORT = 4566;
+// constants
+const LOCALSTACK_HOST = `${LOCALSTACK_HOSTNAME}:${EDGE_PORT}`;
+const ENDPOINT = `http://${LOCALSTACK_HOST}`;
+
+// small import util function
+
+const modulePrefix = '@architect/architect/node_modules';
+const importLib = function(libPath) {
+  try {
+    return require(path.join(modulePrefix, libPath));
+  } catch (e) {
+    return require(path.join(libPath));
+  }
+}
+
+// main import
+
 const path = require('path');
-const AWS = require('aws-sdk');
+const AWS1 = require('aws-sdk');
+const AWS2 = importLib('aws-sdk');
 const Mod = require('module');
 const req = Mod.prototype.require;
 
-// TODO make configurable
-const ENDPOINT = 'http://localhost.localstack.cloud:4566';
+// apply AWS config patches to use local endpoints
 
-// apply patches
+AWS1.config.update({endpoint: ENDPOINT});
+AWS2.config.update({endpoint: ENDPOINT});
 
-AWS.config.update({
-    endpoint: ENDPOINT,
-});
+// apply function patches
 
+const spawn = importLib('@architect/deploy/src/sam/utils/spawn');
 const spawnNew = function(command, args, pretty, callback) {
   command = command == 'aws' ? 'awslocal' : command;
   return spawn(command, args, pretty, callback);
+}
+
+const replaceHostnameInURL = (url) =>
+  url && url.replace(/([a-z0-9]+-[a-z0-9-]+\.)?amazonaws\.com/, LOCALSTACK_HOST).replace('https://', 'http://');
+const reads = importLib('@architect/deploy/src/sam/02-after/00-get-app-apex/reads.js');
+const readsNew = function (params, callback) {
+  const callbackNew = function(error, result) {
+    const apigw = result.apigateway
+    if (apigw) apigw.domain = replaceHostnameInURL(apigw.domain);
+    result.url = replaceHostnameInURL(result.url);
+    result.apiDomain = replaceHostnameInURL(result.apiDomain);
+    return callback(error, result);
+  }
+  return reads(params, callbackNew);
 }
 
 Mod.prototype.require = function () {
@@ -25,11 +58,14 @@ Mod.prototype.require = function () {
   if (modPath.includes("deploy/src/sam/utils/spawn")) {
     return spawnNew;
   }
+  if (modPath.includes("deploy/src/sam/02-after/00-get-app-apex/reads")) {
+    return readsNew;
+  }
   const result = req.apply(this, arguments);
   return result;
 };
 
-// load main CLI code
+// load and run main CLI code
 
 const main = require('@architect/architect/src/index.js');
 (async function () {
