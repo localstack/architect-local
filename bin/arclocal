@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+
+const spawn = require('@architect/architect/node_modules/@architect/deploy/src/sam/utils/spawn');
+const path = require('path');
+const AWS = require('aws-sdk');
+const Mod = require('module');
+const req = Mod.prototype.require;
+
+// TODO make configurable
+const ENDPOINT = 'http://localhost.localstack.cloud:4566';
+
+// apply patches
+
+AWS.config.update({
+    endpoint: ENDPOINT,
+});
+
+const spawnNew = function(command, args, pretty, callback) {
+  command = command == 'aws' ? 'awslocal' : command;
+  return spawn(command, args, pretty, callback);
+}
+
+Mod.prototype.require = function () {
+  const modPath = path.join(this.path, arguments[0]);
+  if (modPath.includes("deploy/src/sam/utils/spawn")) {
+    return spawnNew;
+  }
+  const result = req.apply(this, arguments);
+  return result;
+};
+
+// load main CLI code
+
+const main = require('@architect/architect/src/index.js');
+(async function () {
+  await main()
+})();
